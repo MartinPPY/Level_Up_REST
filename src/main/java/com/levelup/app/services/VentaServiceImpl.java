@@ -3,7 +3,6 @@ package com.levelup.app.services;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,19 +17,18 @@ import com.levelup.app.repositories.UserRepository;
 import com.levelup.app.repositories.VentaDetalleRepository;
 import com.levelup.app.repositories.VentaRepository;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class VentaServiceImpl implements VentaService {
 
-    @Autowired
     private ProductRepository productRepository;
 
-    @Autowired
     private VentaRepository ventaRepository;
 
-    @Autowired
     private VentaDetalleRepository ventaDetalleRepository;
 
-    @Autowired
     private UserRepository userRepository;
 
     @Transactional

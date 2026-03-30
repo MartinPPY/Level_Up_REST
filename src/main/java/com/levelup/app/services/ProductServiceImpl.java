@@ -2,7 +2,6 @@ package com.levelup.app.services;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,12 +12,14 @@ import com.levelup.app.models.dtos.ProductDto;
 import com.levelup.app.repositories.CategoryRepository;
 import com.levelup.app.repositories.ProductRepository;
 
-@Service
-public class ProductServiceImpl implements ProductService {
+import lombok.RequiredArgsConstructor;
 
-    @Autowired
+@Service
+@RequiredArgsConstructor
+public class ProductServiceImpl implements ProductService {
+    
     private ProductRepository productRepository;
-    @Autowired
+
     private CategoryRepository categoryRepository;
 
     @Transactional(readOnly = true)

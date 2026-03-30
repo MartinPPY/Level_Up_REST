@@ -8,7 +8,7 @@ RUN mvn dependency:go-offline
 
 # Copiar el código fuente y compilar el proyecto
 COPY src ./src
-RUN mvn clean package -DskipTests
+RUN mvn clean package
 
 # Etapa 2: Ejecución (Runtime)
 FROM eclipse-temurin:17-jre-alpine

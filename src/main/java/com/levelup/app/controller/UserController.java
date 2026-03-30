@@ -4,8 +4,8 @@ import com.levelup.app.models.dtos.UserDto;
 import com.levelup.app.services.UserService;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -24,9 +24,9 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/users")
+@RequiredArgsConstructor
 public class UserController {
 
-    @Autowired
     private UserService userService;
 
     @GetMapping
