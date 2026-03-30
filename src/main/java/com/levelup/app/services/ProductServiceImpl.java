@@ -9,6 +9,7 @@ import com.levelup.app.exception.NotFoundException;
 import com.levelup.app.models.Category;
 import com.levelup.app.models.Product;
 import com.levelup.app.models.dtos.ProductDto;
+import com.levelup.app.mappers.ProductMapper;
 import com.levelup.app.repositories.CategoryRepository;
 import com.levelup.app.repositories.ProductRepository;
 
@@ -18,62 +19,54 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
     
-    private ProductRepository productRepository;
-
-    private CategoryRepository categoryRepository;
+    private final ProductRepository productRepository;
+    private final CategoryRepository categoryRepository;
+    private final ProductMapper productMapper;
 
     @Transactional(readOnly = true)
     @Override
-    public List<Product> findAll() {
-        return (List<Product>) productRepository.findAll();
+    public List<ProductDto> findAll() {
+        List<Product> products = (List<Product>) productRepository.findAll();
+        return products.stream()
+                .map(productMapper::toDto)
+                .toList();
     }
 
     @Transactional(readOnly = true)
     @Override
     public ProductDto findProductDto(String code) {
-        System.out.println(code);
         Product productDb = productRepository.findById(code).orElseThrow(
                 () -> new NotFoundException("Producto no encontrado!"));
 
-        ProductDto productDto = new ProductDto(code, productDb.getName(), productDb.getPrecio(), productDb.getStock(),
-                productDb.getStockCritico(), productDb.getDescription(), productDb.getImage(),
-                productDb.getCategory().getId().intValue());
-
-        return productDto;
+        return productMapper.toDto(productDb);
     }
 
     @Transactional
     @Override
-    public Product save(ProductDto product) {
-
-        Category category = categoryRepository.findById(product.getCategory().longValue()).orElseThrow(
+    public ProductDto save(ProductDto productDto) {
+        Category category = categoryRepository.findById(productDto.getCategory().longValue()).orElseThrow(
                 () -> new NotFoundException("Categoria no encontrada!"));
 
-        Product producto = new Product(product.getCode(), product.getName(),
-                product.getPrecio(), product.getStock(), product.getStockCritico(),
-                product.getDescription(), product.getImage(), category);
+        Product product = productMapper.toEntity(productDto);
+        product.setCategory(category);
 
-        return productRepository.save(producto);
+        return productMapper.toDto(productRepository.save(product));
     }
 
     @Transactional
     @Override
-    public Product editProduct(String code, ProductDto productDto) {
-        Product productDb = productRepository.findById(code).orElseThrow(
+    public ProductDto editProduct(String code, ProductDto productDto) {
+        productRepository.findById(code).orElseThrow(
                 () -> new NotFoundException("Producto no encontrado!"));
 
         Category categoryDb = categoryRepository.findById(productDto.getCategory().longValue()).orElseThrow(
                 () -> new NotFoundException("Categoria no encontrada!"));
 
-        productDb.setCode(productDto.getCode());
-        productDb.setCategory(categoryDb);
-        productDb.setDescription(productDto.getDescription());
-        productDb.setName(productDto.getName());
-        productDb.setPrecio(productDto.getPrecio());
-        productDb.setStock(productDto.getStock());
-        productDb.setStockCritico(productDto.getStockCritico());
+        Product product = productMapper.toEntity(productDto);
+        product.setCode(code); 
+        product.setCategory(categoryDb);
 
-        return productRepository.save(productDb);
+        return productMapper.toDto(productRepository.save(product));
     }
 
     @Transactional

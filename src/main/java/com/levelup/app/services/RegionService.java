@@ -2,11 +2,11 @@ package com.levelup.app.services;
 
 import java.util.List;
 
-import com.levelup.app.models.Region;
+import com.levelup.app.models.dtos.RegionDto;
 
 public interface RegionService {
     
 
-    List<Region> findAll();
+    List<RegionDto> findAll();
 
 }

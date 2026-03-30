@@ -22,7 +22,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class VentaController {
 
-    private VentaService ventaService;
+    private final VentaService ventaService;
 
     @GetMapping
     public ResponseEntity<List<Venta>> getAll() {

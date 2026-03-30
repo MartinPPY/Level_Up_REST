@@ -1,8 +1,5 @@
 package com.levelup.app.services;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -11,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.levelup.app.exception.NotFoundException;
 import com.levelup.app.exception.UserAlreadyExist;
+import com.levelup.app.mappers.UserMapper;
 import com.levelup.app.models.Comuna;
 import com.levelup.app.models.Role;
 import com.levelup.app.models.User;
@@ -25,59 +23,39 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
-    private UserRepository userRepository;
-
-    private PasswordEncoder passwordEncoder;
-
-    private ComunaRepository comunaRepository;
-
-    private RoleRepository roleRepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final ComunaRepository comunaRepository;
+    private final RoleRepository roleRepository;
+    private final UserMapper userMapper;
 
     @Transactional
     @Override
-    public User save(UserDto user) {
-
-        Comuna comuna = comunaRepository.findById(user.getComunaId().longValue())
+    public User save(UserDto userDto) {
+        Comuna comuna = comunaRepository.findById(userDto.getComunaId())
                 .orElseThrow(() -> new NotFoundException("La comuna no existe!"));
-        Role role = null;
-
-        if (user.getRole() == null) {
-
+        
+        Role role;
+        if (userDto.getRole() == null) {
             role = roleRepository.findById(1L)
                     .orElseThrow(() -> new NotFoundException("El rol por defecto no existe!"));
-
         } else {
-            role = roleRepository.findById(user.getRole().longValue())
-                    .orElseThrow(() -> new NotFoundException("El rol por defecto no existe!"));
+            role = roleRepository.findById(userDto.getRole())
+                    .orElseThrow(() -> new NotFoundException("El rol solicitado no existe!"));
         }
 
-        if (userRepository.findByRun(user.getRun()).isPresent()) {
+        if (userRepository.findByRun(userDto.getRun()).isPresent()) {
             throw new UserAlreadyExist("Este RUN ya esta registrado!");
         }
 
-        if (userRepository.findUserByEmail(user.getEmail()).isPresent()) {
+        if (userRepository.findUserByEmail(userDto.getEmail()).isPresent()) {
             throw new UserAlreadyExist("Este email ya esta registrado!");
         }
 
-        LocalDate birthday = null;
-
-        if (user.getBirthday() != null && !user.getBirthday().isEmpty()) {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            birthday = LocalDate.parse(user.getBirthday(), formatter);
-        }
-
-        String encodedPassword = passwordEncoder.encode(user.getPassword());
-
-        User newUser = new User(
-                user.getRun(),
-                user.getName(),
-                user.getLastname(),
-                user.getEmail(),
-                birthday,
-                encodedPassword,
-                user.getAddres(),
-                comuna,
-                role);
+        User newUser = userMapper.toEntity(userDto);
+        newUser.setComuna(comuna);
+        newUser.setRole(role);
+        newUser.setPassword(passwordEncoder.encode(userDto.getPassword()));
 
         return userRepository.save(newUser);
     }
@@ -85,58 +63,18 @@ public class UserServiceImpl implements UserService {
     @Transactional(readOnly = true)
     @Override
     public List<UserDto> findAllUserDto() {
-        List<UserDto> users = new ArrayList<>();
-
-        for (User user : userRepository.findAll()) {
-
-            String birthdayStr = null;
-            if (user.getBirthday() != null) {
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-                birthdayStr = user.getBirthday().format(formatter);
-            }
-
-            UserDto userDto = new UserDto(
-                    user.getRun(),
-                    user.getName(),
-                    user.getLastname(),
-                    user.getEmail(),
-                    birthdayStr,
-                    user.getAddres(),
-                    user.getComuna().getId(),
-                    user.getRole().getId(),
-                    user.getId());
-            users.add(userDto);
-
-        }
-
-        return users;
-
+        List<User> users = (List<User>) userRepository.findAll();
+        return users.stream()
+                .map(userMapper::toDto)
+                .toList();
     }
 
     @Transactional(readOnly = true)
     @Override
     public UserDto findUserDtoById(Long id) {
-        User userDb = userRepository.findById(id).orElseThrow(() -> new NotFoundException("Usuario no encontrado!"));
-
-        String birthdayStr = null;
-        if (userDb.getBirthday() != null) {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            birthdayStr = userDb.getBirthday().format(formatter);
-        }
-
-        UserDto userDto = new UserDto(
-                userDb.getRun(),
-                userDb.getName(),
-                userDb.getLastname(),
-                userDb.getEmail(),
-                birthdayStr,
-                userDb.getAddres(),
-                userDb.getComuna().getId(),
-                userDb.getRole().getId(),
-                userDb.getId());
-
-        return userDto;
-
+        User userDb = userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Usuario no encontrado!"));
+        return userMapper.toDto(userDb);
     }
 
     @Transactional
@@ -148,37 +86,25 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @Override
     public User editUser(Long id, UserDto userDto) {
-
         User userDb = userRepository.findById(id).orElseThrow(() -> new NotFoundException("Usuario no encontrado"));
 
-        Comuna comuna = comunaRepository.findById(userDto.getComunaId().longValue()).orElseThrow(
+        Comuna comuna = comunaRepository.findById(userDto.getComunaId()).orElseThrow(
                 () -> new NotFoundException("Comuna no encontrada!"));
 
-        userDb.setComuna(comuna);
-
-        Role role = roleRepository.findById(userDto.getRole().longValue())
+        Role role = roleRepository.findById(userDto.getRole())
                 .orElseThrow(() -> new NotFoundException("El rol no existe!"));
 
-        userDb.setRole(role);
-
-        LocalDate birthday = null;
-
-        if (userDto.getBirthday() != null && !userDto.getBirthday().isEmpty()) {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            birthday = LocalDate.parse(userDto.getBirthday(), formatter);
+        User userUpdate = userMapper.toEntity(userDto);
+        userUpdate.setId(id);
+        userUpdate.setComuna(comuna);
+        userUpdate.setRole(role);
+        
+        if (userDto.getPassword() != null && !userDto.getPassword().isBlank()) {
+            userUpdate.setPassword(passwordEncoder.encode(userDto.getPassword()));
+        } else {
+            userUpdate.setPassword(userDb.getPassword());
         }
 
-        userDb.setBirthday(birthday);
-
-        String encodedPassword = passwordEncoder.encode(userDto.getPassword());
-
-        userDb.setRun(userDto.getRun());
-        userDb.setName(userDto.getName());
-        userDb.setLastname(userDto.getLastname());
-        userDb.setEmail(userDto.getEmail());
-        userDb.setPassword(encodedPassword);
-        userDb.setAddres(userDto.getAddres());
-
-        return userRepository.save(userDb);
+        return userRepository.save(userUpdate);
     }
 }

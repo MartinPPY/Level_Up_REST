@@ -12,6 +12,7 @@ import com.levelup.app.models.User;
 import com.levelup.app.models.Venta;
 import com.levelup.app.models.VentaDetalle;
 import com.levelup.app.models.dtos.VentaDto;
+import com.levelup.app.mappers.VentaMapper;
 import com.levelup.app.repositories.ProductRepository;
 import com.levelup.app.repositories.UserRepository;
 import com.levelup.app.repositories.VentaDetalleRepository;
@@ -23,13 +24,11 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class VentaServiceImpl implements VentaService {
 
-    private ProductRepository productRepository;
-
-    private VentaRepository ventaRepository;
-
-    private VentaDetalleRepository ventaDetalleRepository;
-
-    private UserRepository userRepository;
+    private final ProductRepository productRepository;
+    private final VentaRepository ventaRepository;
+    private final VentaDetalleRepository ventaDetalleRepository;
+    private final UserRepository userRepository;
+    private final VentaMapper ventaMapper;
 
     @Transactional
     @Override
@@ -69,11 +68,9 @@ public class VentaServiceImpl implements VentaService {
             productDb.setStock(stockActual - dto.getCantidad());
             productRepository.save(productDb);
 
-            VentaDetalle detalle = new VentaDetalle();
+            VentaDetalle detalle = ventaMapper.toDetalleEntity(dto);
             detalle.setVenta(venta);
             detalle.setProduct(productDb);
-            detalle.setCantidad(dto.getCantidad());
-
             detalle.setPrecio(productDb.getPrecio()); 
 
             ventaDetalleRepository.save(detalle);

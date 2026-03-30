@@ -5,7 +5,9 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.levelup.app.mappers.ComunaMapper;
 import com.levelup.app.models.Comuna;
+import com.levelup.app.models.dtos.ComunaDto;
 import com.levelup.app.repositories.ComunaRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -14,14 +16,16 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ComunaServiceImpl implements ComunaServices {
 
-        
-    private ComunaRepository comunaRepository;
+    private final ComunaRepository comunaRepository;
+    private final ComunaMapper comunaMapper;
 
-    @Transactional
+    @Transactional(readOnly = true)
     @Override
-    public List<Comuna> findAll() {
+    public List<ComunaDto> findAll() {
         List<Comuna> comunas = (List<Comuna>) comunaRepository.findAll();
-        return comunas;
+        return comunas.stream()
+                .map(comunaMapper::toDto)
+                .toList();
     }
 
 }

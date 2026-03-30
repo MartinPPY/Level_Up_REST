@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.levelup.app.models.Product;
 import com.levelup.app.models.dtos.ProductDto;
 import com.levelup.app.services.ProductService;
 
@@ -28,22 +27,22 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ProductController {
 
-    private ProductService productService;
+    private final ProductService productService;
 
     @GetMapping
-    public ResponseEntity<List<Product>> getAllproduct() {
+    public ResponseEntity<List<ProductDto>> getAllproduct() {
         return ResponseEntity.ok().body(productService.findAll());
     }
 
     @GetMapping("/{code}")
-    public ResponseEntity<?> getProductById(@PathVariable String code) {
+    public ResponseEntity<ProductDto> getProductById(@PathVariable String code) {
         return ResponseEntity.ok().body(productService.findProductDto(code));
     }
 
     @PostMapping
-    public ResponseEntity<Product> create(@RequestBody ProductDto productDto) {
-        Product newProduct = productService.save(productDto);
-        return ResponseEntity.status(HttpStatus.CREATED.value()).body(newProduct);
+    public ResponseEntity<ProductDto> create(@RequestBody ProductDto productDto) {
+        ProductDto newProduct = productService.save(productDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(newProduct);
     }
 
     @PutMapping("/{code}")

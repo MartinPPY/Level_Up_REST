@@ -27,7 +27,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class UserController {
 
-    private UserService userService;
+    private final UserService userService;
 
     @GetMapping
     public ResponseEntity<List<UserDto>> getAlluser() {
