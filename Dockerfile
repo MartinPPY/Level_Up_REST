@@ -1,5 +1,5 @@
 # Etapa 1: Construcción (Build)
-FROM maven:3.9-eclipse-temurin-17 AS build
+FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
 
 # Copiar el archivo de configuración de Maven y descargar dependencias (optimiza el caché)
@@ -11,7 +11,7 @@ COPY src ./src
 RUN mvn clean package
 
 # Etapa 2: Ejecución (Runtime)
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
 # Copiar solo el archivo JAR desde la etapa anterior
